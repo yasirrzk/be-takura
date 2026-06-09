@@ -1,0 +1,7 @@
+.env
+gemini.md
+/node_modules
+/dist
+/.env
+/prisma/schema.prisma
+/src/config/prisma.js
