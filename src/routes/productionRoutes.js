@@ -1,12 +1,1 @@
-import express from 'express';
-import { updateProductionStatus, submitQC } from '../controllers/productionController.js';
-import { authMiddleware } from '../middleware/authMiddleware.js';
-
-const router = express.Router();
-
-router.use(authMiddleware);
-
-router.patch('/status/:id', updateProductionStatus);
-router.post('/qc', submitQC);
-
-export default router;
+import express from 'express';\nimport { updateStatus } from '../controllers/productionController.js';\nimport { authMiddleware } from '../middleware/authMiddleware.js';\nconst router = express.Router();\nrouter.use(authMiddleware);\nrouter.patch('/status/:id', updateStatus);\nexport default router;

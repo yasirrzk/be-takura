@@ -1,0 +1,1 @@
+import express from 'express';\nimport { submitQC, getAllQC } from '../controllers/qcController.js';\nimport { authMiddleware } from '../middleware/authMiddleware.js';\n\nconst router = express.Router();\nrouter.use(authMiddleware);\nrouter.get('/', getAllQC);\nrouter.post('/', submitQC);\nexport default router;

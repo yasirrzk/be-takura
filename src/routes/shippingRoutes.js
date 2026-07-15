@@ -1,13 +1,1 @@
-import express from 'express';
-import { getAllFinishedGoods, createShipping, getShippingHistory } from '../controllers/shippingController.js';
-import { authMiddleware } from '../middleware/authMiddleware.js';
-
-const router = express.Router();
-
-router.use(authMiddleware);
-
-router.get('/finished-goods', getAllFinishedGoods);
-router.post('/', createShipping);
-router.get('/history', getShippingHistory);
-
-export default router;
+import express from 'express';\nimport { getAllShippings, createShipping, updateShipping } from '../controllers/shippingController.js';\nimport { authMiddleware } from '../middleware/authMiddleware.js';\nconst router = express.Router();\nrouter.use(authMiddleware);\nrouter.get('/', getAllShippings);\nrouter.post('/', createShipping);\nrouter.put('/:id', updateShipping);\nexport default router;

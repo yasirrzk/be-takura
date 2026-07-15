@@ -53,6 +53,8 @@ npm start
 
 ---
 
+## BASE URL
+
 ## API Documentation
 
 All endpoints are prefixed with `/api`. Success responses follow the format: `{ "success": true, "data": ... }`.
@@ -115,41 +117,30 @@ All endpoints are prefixed with `/api`. Success responses follow the format: `{ 
 
 ---
 
-### 4. Production & Quality Control (`/api/production`)
+### 4. Production (Output)
 
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :--- |
-| PATCH | `/status/:id` | Update plan status | Yes |
-| POST | `/qc` | Submit Quality Control result | Yes |
+| PATCH | `/api/production/status/:id` | Update plan status (mark COMPLETED) | Yes |
 
 **Status Update Body:**
 ```json
 {
-  "status": "IN_PROGRESS" // SCHEDULED, IN_PROGRESS, COMPLETED
+  "status": "COMPLETED",
+  "actualQuantity": 10
 }
 ```
-*Note: Setting status to `IN_PROGRESS` automatically reduces Material stock.*
-
-**Submit QC Body:**
-```json
-{
-  "productionPlanId": 1,
-  "quantityOk": 9,
-  "quantityNg": 1,
-  "defectNotes": "1 unit minor scratch"
-}
-```
-*Note: Submitting QC automatically increases FinishedGood stock and sets plan to `COMPLETED`.*
+*Note: Setting status to COMPLETED automatically increases FinishedGood stock.*
 
 ---
 
-### 5. Shipping (`/api/shipping`)
+### 5. Shipping (Surat Jalan)
 
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :--- |
-| GET | `/finished-goods` | Get all finished goods stock | Yes |
-| POST | `/` | Create shipping record | Yes |
-| GET | `/history` | Get shipping log history | Yes |
+| GET | `/api/shipping` | Get all shippings | Yes |
+| POST | `/api/shipping` | Create new shipping (NEW / REPAIR) | Yes |
+| PUT | `/api/shipping/:id` | Update status / reject info | Yes |
 
 **Shipping Request Body:**
 ```json
@@ -157,13 +148,55 @@ All endpoints are prefixed with `/api`. Success responses follow the format: `{ 
   "finishedGoodId": 1,
   "customerName": "PT Maju Jaya",
   "quantity": 5,
-  "deliveryNoteNumber": "SJ-001"
+  "deliveryNoteNumber": "SJ-001",
+  "type": "NEW"
 }
 ```
+*Note: Automatically reduces FinishedGood stock.*
 
 ---
 
-### 6. AI Forecasting (`/api/ai`)
+### 6. Quality Control (QC)
+
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :--- |
+| GET | `/api/qc` | Get all QC logs | Yes |
+| POST | `/api/qc` | Submit QC inspection on a Shipping | Yes |
+
+**Submit QC Body:**
+```json
+{
+  "shippingId": 1,
+  "quantityOk": 4,
+  "quantityNg": 1,
+  "defectNotes": "1 unit minor scratch"
+}
+```
+*Note: If `quantityNg > 0`, automatically creates an entry in Repair Workshop.*
+
+---
+
+### 7. Repair Workshop
+
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :--- |
+| GET | `/api/repair` | Get all repair queue | Yes |
+| PUT | `/api/repair/:id` | Update repair status and fixed quantity | Yes |
+
+**Update Repair Body:**
+```json
+{
+  "status": "Selesai Diperbaiki",
+  "fixedQuantity": 1,
+  "damageNotes": "Scratched",
+  "repairNotes": "Polished"
+}
+```
+*Note: If status is Selesai Diperbaiki, automatically increases FinishedGood stock back.*
+
+---
+
+### 8. AI Forecasting (`/api/ai`)
 
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :--- |

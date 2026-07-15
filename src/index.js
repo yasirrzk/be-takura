@@ -24,6 +24,12 @@ app.get('/', (req, res) => {
 // Error handling middleware
 app.use(errorMiddleware);
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+// Hanya jalankan server lokal jika bukan di environment Vercel
+if (process.env.VERCEL !== '1') {
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}
+
+// WAJIB untuk Vercel Serverless
+export default app;

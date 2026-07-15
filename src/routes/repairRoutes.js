@@ -1,0 +1,1 @@
+import express from 'express';\nimport { getAllRepairs, updateRepair } from '../controllers/repairController.js';\nimport { authMiddleware } from '../middleware/authMiddleware.js';\n\nconst router = express.Router();\nrouter.use(authMiddleware);\nrouter.get('/', getAllRepairs);\nrouter.put('/:id', updateRepair);\nexport default router;

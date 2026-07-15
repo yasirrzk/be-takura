@@ -27,7 +27,7 @@ export const getForecast = async (req, res, next) => {
 
     // Hitung total pengeluaran
     const totalOut = logs.reduce((sum, log) => sum + log.quantity, 0);
-    const averageOut = totalOut / 3; // Rata-rata per bulan (SMA-3)
+    const averageOut = totalOut / 3; 
 
     res.json({
       success: true,
@@ -35,7 +35,7 @@ export const getForecast = async (req, res, next) => {
         materialId: parseInt(materialId),
         algorithm: 'Simple Moving Average (SMA-3)',
         historicalTotalOut: totalOut,
-        forecastNextMonth: Math.round(averageOut * 100) / 100, // Round to 2 decimal
+        forecastNextMonth: Math.round(averageOut * 100) / 100, 
         unit: 'pcs/unit'
       }
     });
