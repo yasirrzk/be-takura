@@ -1,1 +1,29 @@
-import { PrismaClient } from '@prisma/client';\nconst prisma = new PrismaClient();\n\nexport const updateStatus = async (req, res) => {\n  const { id } = req.params;\n  const { status, actualQuantity } = req.body;\n  try {\n    const updated = await prisma.$transaction(async (tx) => {\n      const plan = await tx.productionPlan.findUnique({ where: { id: parseInt(id) } });\n      if (!plan) throw new Error('Plan not found');\n\n      const newPlan = await tx.productionPlan.update({\n        where: { id: parseInt(id) }, data: { status }\n      });\n\n      if (status === 'COMPLETED' && actualQuantity) {\n        await tx.finishedGood.upsert({\n          where: { productName: plan.productName },\n          update: { stock: { increment: actualQuantity } },\n          create: { productName: plan.productName, stock: actualQuantity }\n        });\n      }\n      return newPlan;\n    });\n    res.json({ success: true, data: updated });\n  } catch (error) { res.status(500).json({ success: false, error: error.message }); }\n};
+import prisma from '../config/prisma.js';
+
+export const updateStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status, actualQuantity } = req.body;
+  try {
+    const updated = await prisma.$transaction(async (tx) => {
+      const plan = await tx.productionPlan.findUnique({ where: { id: parseInt(id) } });
+      if (!plan) throw new Error('Plan not found');
+
+      const newPlan = await tx.productionPlan.update({
+        where: { id: parseInt(id) },
+        data: { status }
+      });
+
+      if (status === 'COMPLETED' && actualQuantity) {
+        await tx.finishedGood.upsert({
+          where: { productName: plan.productName },
+          update: { stock: { increment: actualQuantity } },
+          create: { productName: plan.productName, stock: actualQuantity }
+        });
+      }
+      return newPlan;
+    });
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};

@@ -23,3 +23,18 @@ export const authMiddleware = (req, res, next) => {
     });
   }
 };
+
+// Guard untuk akses berdasarkan role
+// Contoh pemakaian: router.post('/', authMiddleware, requireRole('ADMIN'), handler)
+export const requireRole = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: `Forbidden: Akses hanya untuk role ${roles.join(' / ')}`,
+      });
+    }
+    next();
+  };
+};
+

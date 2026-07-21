@@ -1,1 +1,34 @@
-import { PrismaClient } from '@prisma/client';\nconst prisma = new PrismaClient();\n\nexport const getAllRepairs = async (req, res) => {\n  try {\n    const repairs = await prisma.repair.findMany({ include: { finishedGood: true } });\n    res.json({ success: true, data: repairs });\n  } catch (error) { res.status(500).json({ success: false, error: error.message }); }\n};\n\nexport const updateRepair = async (req, res) => {\n  const { id } = req.params;\n  const { status, fixedQuantity, damageNotes, repairNotes } = req.body;\n  try {\n    const result = await prisma.$transaction(async (tx) => {\n      const updated = await tx.repair.update({\n        where: { id: parseInt(id) },\n        data: { status, fixedQuantity, damageNotes, repairNotes }\n      });\n      \n      if (status === 'Selesai Diperbaiki' && fixedQuantity > 0) {\n        await tx.finishedGood.update({\n          where: { id: updated.finishedGoodId },\n          data: { stock: { increment: fixedQuantity } }\n        });\n      }\n      return updated;\n    });\n    res.json({ success: true, data: result });\n  } catch (error) { res.status(500).json({ success: false, error: error.message }); }\n};
+import prisma from '../config/prisma.js';
+
+export const getAllRepairs = async (req, res) => {
+  try {
+    const repairs = await prisma.repair.findMany({ include: { finishedGood: true } });
+    res.json({ success: true, data: repairs });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+export const updateRepair = async (req, res) => {
+  const { id } = req.params;
+  const { status, fixedQuantity, damageNotes, repairNotes } = req.body;
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      const updated = await tx.repair.update({
+        where: { id: parseInt(id) },
+        data: { status, fixedQuantity, damageNotes, repairNotes }
+      });
+
+      if (status === 'Selesai Diperbaiki' && fixedQuantity > 0) {
+        await tx.finishedGood.update({
+          where: { id: updated.finishedGoodId },
+          data: { stock: { increment: fixedQuantity } }
+        });
+      }
+      return updated;
+    });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};

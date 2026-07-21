@@ -1,1 +1,52 @@
-import { PrismaClient } from '@prisma/client';\nconst prisma = new PrismaClient();\n\nexport const getAllShippings = async (req, res) => {\n  try {\n    const shippings = await prisma.shipping.findMany({ include: { finishedGood: true } });\n    res.json({ success: true, data: shippings });\n  } catch (error) { res.status(500).json({ success: false, error: error.message }); }\n};\n\nexport const createShipping = async (req, res) => {\n  const { finishedGoodId, customerName, quantity, deliveryNoteNumber, type } = req.body;\n  try {\n    const shipping = await prisma.$transaction(async (tx) => {\n      const newShip = await tx.shipping.create({\n        data: { finishedGoodId, customerName, quantity, deliveryNoteNumber, type: type || 'NEW', status: 'In Transit' }\n      });\n      await tx.finishedGood.update({\n        where: { id: finishedGoodId },\n        data: { stock: { decrement: quantity } }\n      });\n      return newShip;\n    });\n    res.json({ success: true, data: shipping });\n  } catch (error) { res.status(500).json({ success: false, error: error.message }); }\n};\n\nexport const updateShipping = async (req, res) => {\n  const { id } = req.params;\n  const { status, rejectQty, rejectNotes } = req.body;\n  try {\n    const updated = await prisma.shipping.update({\n      where: { id: parseInt(id) },\n      data: { status, rejectQty, rejectNotes }\n    });\n    res.json({ success: true, data: updated });\n  } catch (error) { res.status(500).json({ success: false, error: error.message }); }\n};
+import prisma from '../config/prisma.js';
+
+export const getAllFinishedGoods = async (req, res) => {
+  try {
+    const goods = await prisma.finishedGood.findMany();
+    res.json({ success: true, data: goods });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+export const getAllShippings = async (req, res) => {
+  try {
+    const shippings = await prisma.shipping.findMany({ include: { finishedGood: true } });
+    res.json({ success: true, data: shippings });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+export const createShipping = async (req, res) => {
+  const { finishedGoodId, customerName, quantity, deliveryNoteNumber, type } = req.body;
+  try {
+    const shipping = await prisma.$transaction(async (tx) => {
+      const newShip = await tx.shipping.create({
+        data: { finishedGoodId, customerName, quantity, deliveryNoteNumber, type: type || 'NEW', status: 'In Transit' }
+      });
+      await tx.finishedGood.update({
+        where: { id: finishedGoodId },
+        data: { stock: { decrement: quantity } }
+      });
+      return newShip;
+    });
+    res.json({ success: true, data: shipping });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+export const updateShipping = async (req, res) => {
+  const { id } = req.params;
+  const { status, rejectQty, rejectNotes } = req.body;
+  try {
+    const updated = await prisma.shipping.update({
+      where: { id: parseInt(id) },
+      data: { status, rejectQty, rejectNotes }
+    });
+    res.json({ success: true, data: updated });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};

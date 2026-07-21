@@ -1,1 +1,10 @@
-import express from 'express';\nimport { getAllRepairs, updateRepair } from '../controllers/repairController.js';\nimport { authMiddleware } from '../middleware/authMiddleware.js';\n\nconst router = express.Router();\nrouter.use(authMiddleware);\nrouter.get('/', getAllRepairs);\nrouter.put('/:id', updateRepair);\nexport default router;
+import express from 'express';
+import { getAllRepairs, updateRepair } from '../controllers/repairController.js';
+import { authMiddleware } from '../middleware/authMiddleware.js';
+
+const router = express.Router();
+router.use(authMiddleware);
+router.get('/', getAllRepairs);
+router.put('/:id', updateRepair);
+
+export default router;
