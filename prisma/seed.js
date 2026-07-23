@@ -39,6 +39,23 @@ async function main() {
   });
   console.log('✅ User Produksi created');
 
+  // 3. Create Sample Customer Accounts
+  const customers = [
+    { username: 'customer_astra', name: 'Buyer Astra', companyName: 'PT Astra Daihatsu Motor', password: 'customer123' },
+    { username: 'customer_toyota', name: 'Buyer Toyota', companyName: 'PT Toyota Motor Manufacturing', password: 'customer123' },
+  ];
+  const customerRecords = [];
+  for (const c of customers) {
+    const hashed = await bcrypt.hash(c.password, 10);
+    const record = await prisma.user.upsert({
+      where: { username: c.username },
+      update: {},
+      create: { username: c.username, password: hashed, name: c.name, companyName: c.companyName, role: 'CUSTOMER' },
+    });
+    customerRecords.push(record);
+  }
+  console.log('✅ Customer accounts created');
+
 
   // 2. Create Materials
   const materials = [
@@ -112,6 +129,7 @@ async function main() {
 
   // 5. Create Shippings (Deliveries)
   // Bersihkan data lama agar tidak duplikat unique deliveryNoteNumber saat re-seed
+  await prisma.notification.deleteMany();
   await prisma.qualityControl.deleteMany();
   await prisma.repair.deleteMany();
   await prisma.shipping.deleteMany();
@@ -120,6 +138,7 @@ async function main() {
     data: {
       finishedGoodId: fgRecords[0].id,
       customerName: 'PT Astra Daihatsu Motor',
+      customerId: customerRecords[0].id,   // Linked to customer_astra
       quantity: 50,
       deliveryNoteNumber: 'SJ-TK-2026-001',
       status: 'Delivered',
@@ -131,12 +150,27 @@ async function main() {
     data: {
       finishedGoodId: fgRecords[1].id,
       customerName: 'PT Toyota Motor Manufacturing',
+      customerId: customerRecords[1].id,   // Linked to customer_toyota
       quantity: 20,
       deliveryNoteNumber: 'SJ-TK-2026-002',
       status: 'In Transit',
       type: 'NEW',
     }
   });
+
+  // Satu lagi pengiriman untuk astra supaya ada multiple data
+  await prisma.shipping.create({
+    data: {
+      finishedGoodId: fgRecords[2].id,
+      customerName: 'PT Astra Daihatsu Motor',
+      customerId: customerRecords[0].id,
+      quantity: 30,
+      deliveryNoteNumber: 'SJ-TK-2026-003',
+      status: 'In Transit',
+      type: 'NEW',
+    }
+  });
+
   console.log('✅ Shippings seeded');
 
   // 6. Create Quality Control for Delivered Shipping (ship1)
