@@ -1,4 +1,5 @@
 import prisma from '../config/prisma.js';
+import { createSystemNotification } from './notificationController.js';
 
 export const getAllPlans = async (req, res) => {
   try {
@@ -34,6 +35,14 @@ export const createProductionPlan = async (req, res) => {
           data: { materialId, type: 'OUT', quantity: materialRequirement, notes: 'Used for plan ' + planNumber }
         });
       }
+
+      // Kirim notifikasi sistem (Admin & Produksi)
+      await createSystemNotification(tx, {
+        title: 'Rencana PPIC Baru Terbit 📋',
+        message: `Rencana produksi ${productName} sebanyak ${targetQuantity} pcs (${planNumber}) telah dibuat.`,
+        type: 'INFO'
+      });
+
       return newPlan;
     });
     res.json({ success: true, data: plan });

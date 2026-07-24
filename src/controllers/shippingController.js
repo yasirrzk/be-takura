@@ -1,4 +1,5 @@
 import prisma from '../config/prisma.js';
+import { createSystemNotification } from './notificationController.js';
 
 export const getAllFinishedGoods = async (req, res) => {
   try {
@@ -70,6 +71,19 @@ export const createShipping = async (req, res) => {
           }
         });
       }
+
+      // Kirim notifikasi sistem (Admin & Produksi)
+      const fg = await tx.finishedGood.findUnique({
+        where: { id: finishedGoodId },
+        select: { productName: true }
+      });
+      const prodName = fg?.productName || 'Barang Jadi';
+
+      await createSystemNotification(tx, {
+        title: 'Pengiriman Barang 🚚',
+        message: `Barang ${prodName} sebanyak ${quantity} pcs dikirim ke ${customerName}.`,
+        type: 'INFO'
+      });
 
       // Jika tipe REPAIR & ada customerId → otomatis update shipping Rejected milik customer ini ke Reshipped
       if (type === 'REPAIR' && customerId) {
@@ -151,10 +165,22 @@ export const customerConfirmReceived = async (req, res) => {
     if (shipping.customerId !== req.user.id) return res.status(403).json({ success: false, message: 'Akses ditolak.' });
     if (shipping.status !== 'In Transit') return res.status(400).json({ success: false, message: 'Hanya pengiriman "In Transit" yang bisa dikonfirmasi.' });
 
-    const updated = await prisma.shipping.update({
-      where: { id: parseInt(id) },
-      data: { status: 'Delivered' }
+    const updated = await prisma.$transaction(async (tx) => {
+      const up = await tx.shipping.update({
+        where: { id: parseInt(id) },
+        data: { status: 'Delivered' }
+      });
+
+      // Kirim notifikasi sistem (Admin & Produksi)
+      await createSystemNotification(tx, {
+        title: 'Pesanan Diterima ✅',
+        message: `${shipping.customerName} telah mengonfirmasi penerimaan barang untuk ${shipping.deliveryNoteNumber}.`,
+        type: 'SUCCESS'
+      });
+
+      return up;
     });
+
     res.json({ success: true, data: updated });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -213,6 +239,13 @@ export const customerReportNG = async (req, res) => {
           message: `Barang dari ${shipping.deliveryNoteNumber} telah masuk antrean repair. Tim produksi akan segera memproses.`,
           type: 'INFO'
         }
+      });
+
+      // Kirim notifikasi sistem (Admin & Produksi)
+      await createSystemNotification(tx, {
+        title: 'Barang NG Dilaporkan ⚠️',
+        message: `${shipping.customerName} melaporkan ${rejectQty} pcs barang NG untuk ${shipping.deliveryNoteNumber}.`,
+        type: 'WARNING'
       });
 
       return updated;

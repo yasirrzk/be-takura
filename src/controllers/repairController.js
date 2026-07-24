@@ -1,4 +1,5 @@
 import prisma from '../config/prisma.js';
+import { createSystemNotification } from './notificationController.js';
 
 export const getAllRepairs = async (req, res) => {
   try {
@@ -72,6 +73,21 @@ export const updateRepair = async (req, res) => {
             }
           });
         }
+      }
+
+      // Kirim notifikasi sistem (Admin & Produksi)
+      const systemLabels = {
+        'Sedang Diperbaiki': { title: 'Perbaikan Dimulai 🔧', type: 'INFO' },
+        'Selesai Diperbaiki': { title: 'Perbaikan Selesai ✅', type: 'SUCCESS' }
+      };
+      if (systemLabels[status]) {
+        const productName = existing.finishedGood?.productName || 'Barang';
+        const companyName = existing.customer?.companyName ? ` (milik ${existing.customer.companyName})` : '';
+        await createSystemNotification(tx, {
+          title: systemLabels[status].title,
+          message: `Barang repair ${productName}${companyName} sebanyak ${existing.ngQuantity} pcs statusnya berubah menjadi ${status === 'Sedang Diperbaiki' ? 'Sedang Diperbaiki' : 'Selesai Diperbaiki'}.`,
+          type: systemLabels[status].type
+        });
       }
 
       return updated;

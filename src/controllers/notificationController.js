@@ -43,3 +43,22 @@ export const sendNotificationToCustomer = async (tx, shippingId, title, message,
     data: { userId: shipping.customerId, shippingId, title, message, type }
   });
 };
+
+// Helper: Kirim notif ke staff (Admin & Produksi)
+export const createSystemNotification = async (tx, { title, message, type = 'INFO', roles = ['ADMIN', 'PRODUKSI'] }) => {
+  const users = await tx.user.findMany({
+    where: { role: { in: roles } },
+    select: { id: true }
+  });
+  const notifData = users.map(user => ({
+    userId: user.id,
+    title,
+    message,
+    type
+  }));
+  if (notifData.length > 0) {
+    await tx.notification.createMany({
+      data: notifData
+    });
+  }
+};

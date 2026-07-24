@@ -51,7 +51,7 @@ export const login = async (req, res, next) => {
       message: 'Login successful',
       data: {
         token,
-        user: { id: user.id, username: user.username, name: user.name, role: user.role },
+        user: { id: user.id, username: user.username, name: user.name, role: user.role, companyName: user.companyName },
       },
     });
   } catch (error) {
@@ -63,7 +63,7 @@ export const getMe = async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
-      select: { id: true, username: true, name: true, role: true },
+      select: { id: true, username: true, name: true, role: true, companyName: true },
     });
     res.json({ success: true, data: user });
   } catch (error) {
